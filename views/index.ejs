@@ -1,0 +1,11 @@
+<h1>Hello World!</h1>
+<h3>Halo <%= name %></h3>
+<h5>List of people</h5>
+<% if (people.length === 0) { %>
+<p>Data's not found</p>
+<% } %> <% people.forEach(person => { %>
+<ul>
+  <li><%= person.name %></li>
+  <li><%= person.email %></li>
+</ul>
+<% }) %>
