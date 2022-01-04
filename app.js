@@ -1,6 +1,6 @@
 const express = require("express");
 const expressLayouts = require("express-ejs-layouts");
-const { loadContact, findContact, addContact, duplicateCheck } = require("./utils/contacts");
+const { loadContact, findContact, addContact, duplicateCheck, deleteContact, updateContacts } = require("./utils/contacts");
 const app = express();
 const port = 3000;
 const { body, validationResult, check } = require("express-validator");
@@ -105,6 +105,64 @@ app.post(
       addContact(req.body);
       // Send the flash message
       req.flash("msg", "New contact added!");
+      res.redirect("/contact");
+    }
+  }
+);
+
+// Delete process of the contact
+app.get("/contact/delete/:name", (req, res) => {
+  const contact = findContact(req.params.name);
+
+  // Condition when the contact is not found
+  if (!contact) {
+    res.status(404);
+    res.send("<h1>404</h1>");
+  } else {
+    deleteContact(req.params.name);
+    // Send the flash message
+    req.flash("msg", "Contact's data deleted!");
+    res.redirect("/contact");
+  }
+});
+
+// Form for edit contact
+app.get("/contact/edit/:name", (req, res) => {
+  const contact = findContact(req.params.name);
+  res.render("edit-contact", {
+    layout: "layouts/main-layout",
+    title: "Edit Contact Form",
+    contact,
+  });
+});
+
+// Edit data process
+app.post(
+  "/contact/update",
+  [
+    body("name").custom((value, { req }) => {
+      const duplicate = duplicateCheck(value);
+      if (value !== req.body.oldName && duplicate) {
+        throw new Error(`The contact's name of ${value} is being used, please use other name!`);
+      }
+      return true;
+    }),
+    check("phonenum", "Phone Number is not valid!").isMobilePhone("id-ID"),
+    check("email", "Email is not valid!").isEmail(),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.render("edit-contact", {
+        layout: "layouts/main-layout",
+        title: "Edit Contact Form",
+        errors: errors.array(),
+        contact: req.body,
+      });
+    } else {
+      updateContacts(req.body);
+      // Send the flash message
+      req.flash("msg", "Data contact edited!");
       res.redirect("/contact");
     }
   }
